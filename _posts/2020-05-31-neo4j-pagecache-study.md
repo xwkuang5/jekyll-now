@@ -1,6 +1,6 @@
 ---
 layout: post
-title: A Study on Neo4j's Pagecache
+title: A study on Neo4j's pagecache
 ---
 
 As my course project for [CS848 Graph Analytics and Data Management](https://cs.uwaterloo.ca/~ssalihog/courses/cs848-winter-2020.html) in my last term at the University of Waterloo, I did an empirical study on the page cache component of Neo4j, an open-source graph database system. Here is a somewhat lengthy blog post about it :)
