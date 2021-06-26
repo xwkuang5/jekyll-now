@@ -54,6 +54,12 @@ In this empirical study, I learned that simple cache replacement algorithms like
 
 I have left out many details of the study and the project to avoid making this blog post too long. If you are interested in learning more about the study, feel free to reach out to me and I am more than happy to share more and discuss databases!
 
+## Changelog
+
+### 2021-06-26 updates 
+
+I recently learned that the version of Neo4j (3.5.14.0) used in my experiment did not make use of the direct I/O support ([ExtendedOptions.DIRECT](https://bugs.openjdk.java.net/browse/JDK-8189192)) available in the JDK. The support was added to Neo4j 4.X version in this [commit](https://github.com/neo4j/neo4j/commit/ca09f6fe384fbb6197383e829d7cb0430ba05560). This means that all the data in the experiment that was supposed to be loaded from disk to the database buffer directly was probably loaded from the file system page cache (the cache has been warmed during the warmup period). This would give random and GClock unfair advantages because page load all of a sudden became much cheaper. This would explain why we observed much better hit ratio in LRU-based algorithms than random and GClock and yet random and GClock had much higher throughput. Oh well :(
+
 ## Footnote
 
 [^1]: Note that there are other ways to implement this without using locks. For example, one can use more advanced primitives such as multi-word compare-and-swap to make the data structure lock-free. But still, the fundamental problem is that threads will contend at the head of the list. This problem will not magically vanish just because a lock-free implementation is used. Instead of threads waiting to acquire locks in a lock-based implementation, threads will likely be busy aborting the compare-and-swap operations.
