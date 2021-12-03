@@ -3,6 +3,9 @@ layout: post
 title: A study on Neo4j's pagecache
 ---
 
+As my course project for [CS848 Graph Analytics and Data Management](https://cs.uwaterloo.ca/~ssalihog/courses/cs848-winter-2020.html) in my last term at the University of Waterloo, I did an empirical study on the page cache component of Neo4j, an open-source graph database system. Here is a somewhat lengthy blog post about it :)
+
+
 ## Table of Content
 - [GClock](#gclock)
 - [LRU, Friends, or Foes?](#lru-friends-or-foes)
@@ -13,8 +16,6 @@ title: A study on Neo4j's pagecache
 - [Changelog](#changelog)
   * [2021-06-26 updates](#2021-06-26-updates)
 - [Footnote](#footnote)
-
-As my course project for [CS848 Graph Analytics and Data Management](https://cs.uwaterloo.ca/~ssalihog/courses/cs848-winter-2020.html) in my last term at the University of Waterloo, I did an empirical study on the page cache component of Neo4j, an open-source graph database system. Here is a somewhat lengthy blog post about it :)
 
 ## GClock
 I was interested in the impact of different cache replacement policies on the performance of the database. At the time, Neo4j (3.5.14.0) used the [`GClock`](https://dl.acm.org/doi/10.1145/320263.320276) algorithm to select a page to evict when the page cache runs out of space. `GClock` is a simple algorithm that keeps a counter on each buffer page as an approximate measure for the frequency of access of the page. When there is a need to evict a page, the algorithm scans the list of pages sequentially, decreases the counter value of the page by 1, and evicts the page if the counter reaches 0. If the counter is non-zero after the decrement, the algorithm moves on to the next page and repeats until a "victim", a page with a counter value of 0, is found. When a victim page is found, the algorithm records the position of the page, evict the page by flushing any dirty content of the page onto the disk, and returns an empty page to the caller. The position of the victim page is used as the starting position of the next scan. Because of this recording, the page just returned to the caller will not be evicted until at least another full scan of the page cache. Finally, whenever a page is accessed, its counter is incremented by 1, bounded by a user-specified maximum value. This is the gist of the replacement algorithm. Of course, when integrating with a database, we need to make some small changes to tailor to the needs of the database application logic. For example, a running transaction of the database can "pin" a page to signal to the cache replacement algorithm that the page should not be evicted.
